@@ -4,4 +4,4 @@ from .models import Company, Shift, Position
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
-        fields = ('name', 'contact_name', 'contact_email', 'contact_phone', 'contact_position')
+        fields = ('id', 'name', 'contact_name', 'contact_email', 'contact_phone', 'contact_position')
