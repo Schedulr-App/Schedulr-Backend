@@ -26,3 +26,8 @@ class ShiftSerializer(serializers.ModelSerializer):
         model = Shift
         fields = ('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'start_time', 'end_time', 'payrate', 'billrate', 'created_at', 'created_by')
         depth = 1
+
+class PositionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Position
+        fields = ('id', 'name', 'description')

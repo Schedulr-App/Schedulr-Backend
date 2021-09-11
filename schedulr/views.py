@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .models import Company, Shift
-from .serializers import CompanySerializer, ShiftSerializer
+from .models import Company, Shift, Position
+from .serializers import CompanySerializer, ShiftSerializer, PositionSerializer
 from django.http import JsonResponse
 
 # Create your views here.
@@ -15,6 +15,14 @@ class CompanyList(generics.ListCreateAPIView):
 class CompanyDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
+
+class PositionList(generics.ListCreateAPIView):
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
+
+class PositionDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Position.objects.all()
+    serializer_class = PositionSerializer
 
 # class ShiftList(generics.ListCreateAPIView):
 #     queryset = Shift.objects.all()
