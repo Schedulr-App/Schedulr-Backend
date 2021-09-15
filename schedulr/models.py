@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.deletion import SET_DEFAULT
+from django.db.models.deletion import SET, SET_DEFAULT, CASCADE
+# from .models import Shift
 
 # Create your models here.
 
@@ -15,6 +16,7 @@ class Company(models.Model):
 
     def __str__(self):
         return self.name
+
 
 #### Position Model
 
@@ -31,7 +33,7 @@ class Shift(models.Model):
         Company,
         default='Company',
         on_delete=SET_DEFAULT, 
-        related_name='shift_company'
+        related_name='shifts'
     )
     title  = models.CharField(max_length=100)
     position = models.ForeignKey(
@@ -40,7 +42,12 @@ class Shift(models.Model):
         default='Position',
         on_delete=SET_DEFAULT
     )
-    address = models.CharField(max_length=200)
+    street = models.CharField(max_length=200, default='null')
+    city = models.CharField(max_length=100, default='null')
+    state = models.CharField(max_length=2, default='NA')
+    zip = models.CharField(max_length=5, default='null')
+    lat = models.CharField(max_length=100, default='null')
+    lng = models.CharField(max_length=100, default='null')
     uniform = models.TextField()
     description = models.TextField()
     on_site_contact = models.CharField(max_length=100)
@@ -51,6 +58,8 @@ class Shift(models.Model):
         related_name='shift_claims',
         default='Worker',
     )
+    payrate = models.CharField(max_length=10, default=0)
+    billrate = models.CharField(max_length=10, default=0)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -63,3 +72,14 @@ class Shift(models.Model):
     def __str__(self):
         return self.title
 
+class Worker(models.Model):
+    user = models.OneToOneField(
+        User, 
+        on_delete=CASCADE
+    )
+    shifts = models.ManyToManyField(
+        Shift,
+        related_name='claimed_shifts'
+    )
+    email = models.CharField(max_length=100)
+    phone = models.CharField(max_length=100)
