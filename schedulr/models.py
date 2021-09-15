@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.deletion import SET, SET_DEFAULT
+from django.db.models.deletion import SET, SET_DEFAULT, CASCADE
 # from .models import Shift
 
 # Create your models here.
@@ -72,3 +72,14 @@ class Shift(models.Model):
     def __str__(self):
         return self.title
 
+class Worker(models.Model):
+    user = models.OneToOneField(
+        User, 
+        on_delete=CASCADE
+    )
+    shifts = models.ManyToManyField(
+        Shift,
+        related_name='claimed_shifts'
+    )
+    email = models.CharField(max_length=100)
+    phone = models.CharField(max_length=100)

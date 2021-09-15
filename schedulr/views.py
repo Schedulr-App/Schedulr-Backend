@@ -3,6 +3,7 @@ from rest_framework import generics
 from .models import Company, Shift, Position
 from .serializers import CompanySerializer, ShiftSerializer, PositionSerializer
 from django.http import JsonResponse
+from django.contrib.auth.models import User
 
 # Create your views here.
 
@@ -42,3 +43,9 @@ def shift_detail(request, pk):
     shifts = Shift.objects.all().values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
     shift = shifts.filter(id=pk)
     return JsonResponse(list(shift), safe=False)
+
+def user_list(request):
+    users = User.objects.all().values('id', 'first_name','last_name','email','date_joined')
+    users_list = users.filter(is_staff=False)
+    return JsonResponse(list(users_list), safe=False)
+
