@@ -1,0 +1,1 @@
+web: gunicorn schedulr_django.wsgi
