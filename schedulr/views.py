@@ -3,7 +3,9 @@ from rest_framework import generics
 from .models import Company, Shift, Position
 from .serializers import CompanySerializer, ShiftSerializer, PositionSerializer
 from django.http import JsonResponse
+from django.http import HttpResponse
 from django.contrib.auth.models import User
+import json
 
 # Create your views here.
 
@@ -49,3 +51,33 @@ def user_list(request):
     users_list = users.filter(is_staff=False)
     return JsonResponse(list(users_list), safe=False)
 
+def shift_create(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        # Grabbing company
+        companies = Company.objects.all().values('id', 'name')
+        company = companies.filter(name=data['company'])
+        companyId = company[0]['id']
+        # Grabbing position
+        positions = Position.objects.all().values('id', 'name')
+        position = positions.filter(name=data['position'])
+        positionId = position[0]['id']
+
+        shift = Shift(company_id=companyId, title=data['title'], position_id=positionId, street=data['street'], city=data['city'], state=data['state'], zip=data['zip'], lat=data['lat'],lng=data['lng'], uniform=data['uniform'], description=data['description'], on_site_contact=data['on_site_contact'], meeting_location=data['meeting_location'], staff_needed=data['staff_needed'],payrate=data['payrate'], billrate=data['billrate'], start_time=data['start_time'], end_time=data['end_time'], created_by_id=1)
+
+        shift.save()
+
+        return HttpResponse('OK')
+    else:
+        HttpResponse('none')
+
+def shift_update(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+
+        shifts = Shift.objects.all()
+        shift = shifts.filter(id=data['id'])
+        print(shift)
+        return HttpResponse('OK')
+    else:
+        pass
