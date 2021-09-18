@@ -73,7 +73,7 @@ class Shift(models.Model):
         return self.title
 
 class Worker(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User, 
         on_delete=CASCADE
     )

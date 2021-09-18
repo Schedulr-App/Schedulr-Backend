@@ -11,6 +11,9 @@ urlpatterns = [
     path('shifts/', views.shift_list, name='shifts_list'),
     path('shifts/new', views.shift_create, name='shift_create'),
     path('shifts/update', views.shift_update, name='shift_update'),
+    path('shifts/assign', views.shift_assign, name='shift_assign'),
     path('shifts/<int:pk>', views.shift_detail, name='shift_detail'),
     path('workforce/', views.user_list, name='user_list'),
+    path('workforce/new', views.user_create, name='user_create'),
+    path('workforce/<int:pk>', views.user_detail, name='user_detail'),
 ]
