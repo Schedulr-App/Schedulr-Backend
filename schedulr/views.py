@@ -56,19 +56,23 @@ def shift_list(request):
 
 def shift_detail(request, pk):
     shift = Shift.objects.filter(id=pk)
-    shift_detail = shift.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name', 'staff_claimed__first_name', 'staff_claimed__last_name')
+    shift.select_related('staff_claimed')
+    shift_detail = shift.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name', 'staff_claimed__first_name', 'staff_claimed__last_name', 'staff_claimed__id')
     shifts_list = list(shift_detail)
     processed = {}
     for record in shifts_list:
         if record['id'] in processed.keys():
             processed[record['id']]['staff_count'] += 1
             processed[record['id']]['staff_array'].append(record['staff_claimed'])
+            processed[record['id']]['staff_info'].append({ 'id': record['staff_claimed__id'], 'firstname': record['staff_claimed__first_name'], 'lastname': record['staff_claimed__last_name']})
         else:
             temp = record
             temp['staff_count'] = 1
             temp['staff_array'] = [record['staff_claimed']]
+            temp['staff_info'] = [{ 'id': record['staff_claimed__id'], 'firstname': record['staff_claimed__first_name'], 'lastname': record['staff_claimed__last_name']}]
             processed[record['id']] = temp
 
+            
     return JsonResponse(processed, safe=False)
 
 def user_list(request):
