@@ -16,4 +16,5 @@ urlpatterns = [
     path('workforce/', views.user_list, name='user_list'),
     path('workforce/new', views.user_create, name='user_create'),
     path('workforce/<int:pk>', views.user_detail, name='user_detail'),
+    path('export/', views.shift_export, name='shift_export'),
 ]

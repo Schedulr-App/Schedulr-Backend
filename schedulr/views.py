@@ -6,6 +6,8 @@ from django.http import JsonResponse
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 import json
+import csv
+
 
 # Create your views here.
 
@@ -134,3 +136,17 @@ def user_detail(request, pk):
     user = User.objects.filter(id=pk)
     user_detail = user.values('id', 'email', 'first_name', 'last_name', 'username')
     return JsonResponse(list(user_detail), safe=False)
+
+
+def shift_export(request):
+    response = HttpResponse(content_type='text/csv')
+
+    writer = csv.writer(response)
+    writer.writerow(['Shift Id', 'Company', 'Shift Title', 'Position', 'Street Address', 'City', 'State', 'Zip Code', 'Latitude', 'Longitude', 'Uniform', 'Description', 'Onsite Contact', 'Meeting Location', 'Staff Needed', 'Staff Claimed', 'Payrate', 'Billrate', 'Start Time', 'End Time', 'Created At', 'Created By'])
+
+    for shift in Shift.objects.all().values_list('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name'):
+        writer.writerow(shift)
+    
+    response['Content-Disposition'] = 'attachment; filename="shifts.csv"'
+
+    return response
