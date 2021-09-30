@@ -53,11 +53,7 @@ class Shift(models.Model):
     on_site_contact = models.CharField(max_length=100)
     meeting_location = models.CharField(max_length=200)
     staff_needed = models.IntegerField()
-    staff_claimed = models.ManyToManyField(
-        User,
-        related_name='shift_claims',
-        default='Worker',
-    )
+    staff_claimed = models.ManyToManyField(User)
     payrate = models.CharField(max_length=10, default=0)
     billrate = models.CharField(max_length=10, default=0)
     start_time = models.DateTimeField()
@@ -73,7 +69,7 @@ class Shift(models.Model):
         return self.title
 
 class Worker(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User, 
         on_delete=CASCADE
     )
