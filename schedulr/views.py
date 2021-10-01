@@ -138,13 +138,15 @@ def user_detail(request, pk):
     return JsonResponse(list(user_detail), safe=False)
 
 
+## Exporting Data
+
 def shift_export(request):
     response = HttpResponse(content_type='text/csv')
 
     writer = csv.writer(response)
-    writer.writerow(['Shift Id', 'Company', 'Shift Title', 'Position', 'Street Address', 'City', 'State', 'Zip Code', 'Latitude', 'Longitude', 'Uniform', 'Description', 'Onsite Contact', 'Meeting Location', 'Staff Needed', 'Staff Claimed', 'Payrate', 'Billrate', 'Start Time', 'End Time', 'Created At', 'Created By'])
+    writer.writerow(['Shift Id', 'Shift Title', 'Company Id', 'Company Name', 'Position Id', 'Position Name', 'Street Address', 'City', 'State', 'Zip Code', 'Latitude', 'Longitude', 'Uniform', 'Description', 'Onsite Contact', 'Meeting Location', 'Staff Needed', 'Staff Claimed', 'Payrate', 'Billrate', 'Start Time', 'End Time', 'Created At', 'Created By'])
 
-    for shift in Shift.objects.all().values_list('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name'):
+    for shift in Shift.objects.all().values_list('id', 'title', 'company', 'company__name', 'position', 'position__name', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', ):
         writer.writerow(shift)
     
     response['Content-Disposition'] = 'attachment; filename="shifts.csv"'
