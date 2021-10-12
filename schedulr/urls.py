@@ -12,6 +12,7 @@ urlpatterns = [
     path('shifts/new', views.shift_create, name='shift_create'),
     path('shifts/update', views.shift_update, name='shift_update'),
     path('shifts/assign', views.shift_assign, name='shift_assign'),
+    path('shifts/remove', views.shift_remove, name='shift_remove'),
     path('shifts/<int:pk>', views.shift_detail, name='shift_detail'),
     path('workforce/', views.user_list, name='user_list'),
     path('workforce/new', views.user_create, name='user_create'),

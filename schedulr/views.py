@@ -123,6 +123,16 @@ def shift_assign(request):
     else:
         HttpResponse('Something went wrong')
 
+def shift_remove(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        shift = Shift.objects.get(id=data['shift_id'])
+        worker =User.objects.get(id=data['user'])
+        shift.staff_claimed.remove(worker)
+        return HttpResponse('Your request has been received')
+    else:
+        HttpResponse('Something went wrong')
+
 def user_create(request):
     if request.method=='POST':
         data = json.loads(request.body)
