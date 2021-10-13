@@ -6,6 +6,8 @@ from django.http import JsonResponse
 from django.http import HttpResponse
 from django.contrib.auth.models import User
 import json
+import csv
+
 
 # Create your views here.
 
@@ -121,6 +123,16 @@ def shift_assign(request):
     else:
         HttpResponse('Something went wrong')
 
+def shift_remove(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        shift = Shift.objects.get(id=data['shift_id'])
+        worker =User.objects.get(id=data['user'])
+        shift.staff_claimed.remove(worker)
+        return HttpResponse('Your request has been received')
+    else:
+        HttpResponse('Something went wrong')
+
 def user_create(request):
     if request.method=='POST':
         data = json.loads(request.body)
@@ -134,3 +146,19 @@ def user_detail(request, pk):
     user = User.objects.filter(id=pk)
     user_detail = user.values('id', 'email', 'first_name', 'last_name', 'username')
     return JsonResponse(list(user_detail), safe=False)
+
+
+## Exporting Data
+
+def shift_export(request):
+    response = HttpResponse(content_type='text/csv')
+
+    writer = csv.writer(response)
+    writer.writerow(['Shift Id', 'Shift Title', 'Company Id', 'Company Name', 'Position Id', 'Position Name', 'Street Address', 'City', 'State', 'Zip Code', 'Latitude', 'Longitude', 'Uniform', 'Description', 'Onsite Contact', 'Meeting Location', 'Staff Needed', 'Staff Id', 'Staff First Name', 'Staff Last Name', 'Payrate', 'Billrate', 'Start Time', 'End Time', 'Created At', 'Created By'])
+
+    for shift in Shift.objects.all().values_list('id', 'title', 'company', 'company__name', 'position', 'position__name', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'staff_claimed__first_name', 'staff_claimed__last_name', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', ):
+        writer.writerow(shift)
+    
+    response['Content-Disposition'] = 'attachment; filename="shifts.csv"'
+
+    return response
