@@ -7,6 +7,8 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 import json
 import csv
+import datetime
+from django.utils import timezone
 
 
 # Create your views here.
@@ -116,7 +118,23 @@ def shift_update(request):
 def shift_assign(request):
     if request.method == 'PUT':
         data = json.loads(request.body)
-        shift = Shift.objects.get(id=data['shift_id'])
+        shift = Shift.objects.get(id=data['shift_id']) 
+        print(shift.staff_claimed)
+        # shifts_list=list(shift)
+        # processed = {}
+        # for record in shifts_list:
+        #     if record['id'] in processed.keys():
+        #         processed[record['id']]['staff_count'] += 1
+        #         processed[record['id']]['staff_array'].append(record['staff_claimed'])
+        #     else:
+        #         temp = record
+        #         if temp['staff_claimed']:
+        #             temp['staff_count'] = 1
+        #         else:
+        #             temp['staff_count'] = 0
+        #         temp['staff_array'] = [record['staff_claimed']]
+        #         processed[record['id']] = temp
+        # print(processed)
         worker = User.objects.get(id=data['user'])
         shift.staff_claimed.add(worker)
         return HttpResponse('Your request has been received')
@@ -162,3 +180,17 @@ def shift_export(request):
     response['Content-Disposition'] = 'attachment; filename="shifts.csv"'
 
     return response
+
+
+## Data Vis Return
+
+def shift_visual(request):
+    shifts = shifts = Shift.objects.all()
+    shiftsPast = shifts.filter(start_time__lte=timezone.now())
+    pastSeven = shiftsPast.filter(start_time__gte=timezone.now() - datetime.timedelta(days=7))
+    shiftList = pastSeven.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
+    shiftCount = 0
+    for record in pastSeven:
+        shiftCount += 1
+    print(shiftList)
+    return JsonResponse(shiftCount, safe=False)
