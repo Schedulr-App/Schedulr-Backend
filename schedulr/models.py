@@ -65,6 +65,8 @@ class Shift(models.Model):
         on_delete=SET_DEFAULT, 
         related_name='shift_admin'
     )
+    full = models.BooleanField(default=False)
+    closed = models.BooleanField(default=False)
     def __str__(self):
         return self.title
 
