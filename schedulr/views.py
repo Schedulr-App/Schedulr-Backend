@@ -61,7 +61,7 @@ def shift_list(request):
 def shift_detail(request, pk):
     shift = Shift.objects.filter(id=pk)
     shift.select_related('staff_claimed')
-    shift_detail = shift.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name', 'staff_claimed__first_name', 'staff_claimed__last_name', 'staff_claimed__id')
+    shift_detail = shift.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name', 'staff_claimed__first_name', 'staff_claimed__last_name', 'staff_claimed__id', 'full', 'closed')
     shifts_list = list(shift_detail)
     processed = {}
     for record in shifts_list:
@@ -118,26 +118,34 @@ def shift_update(request):
 def shift_assign(request):
     if request.method == 'PUT':
         data = json.loads(request.body)
-        shift = Shift.objects.get(id=data['shift_id']) 
-        print(shift.staff_claimed)
-        # shifts_list=list(shift)
-        # processed = {}
-        # for record in shifts_list:
-        #     if record['id'] in processed.keys():
-        #         processed[record['id']]['staff_count'] += 1
-        #         processed[record['id']]['staff_array'].append(record['staff_claimed'])
-        #     else:
-        #         temp = record
-        #         if temp['staff_claimed']:
-        #             temp['staff_count'] = 1
-        #         else:
-        #             temp['staff_count'] = 0
-        #         temp['staff_array'] = [record['staff_claimed']]
-        #         processed[record['id']] = temp
-        # print(processed)
+        shift = Shift.objects.get(id=data['shift_id'])
+        claimList = shift.staff_claimed.values()
+        needed = shift.staff_needed
+        claimed = 0
+
+        for record in claimList:
+            claimed += 1
+
         worker = User.objects.get(id=data['user'])
-        shift.staff_claimed.add(worker)
-        return HttpResponse('Your request has been received')
+
+        print('HERE')
+        print(claimed)
+        print(needed)
+        print(shift.full)
+
+
+        if claimed >= needed:
+            return HttpResponse('The shift is full, please review the staff list', status=250)
+        
+        else: 
+            shift.staff_claimed.add(worker)
+            claimed += 1
+            if claimed == needed:
+                shift.full = True
+                shift.save()
+            return HttpResponse('Your request has been received')
+            
+
     else:
         HttpResponse('Something went wrong')
 
@@ -187,10 +195,25 @@ def shift_export(request):
 def shift_visual(request):
     shifts = shifts = Shift.objects.all()
     shiftsPast = shifts.filter(start_time__lte=timezone.now())
-    pastSeven = shiftsPast.filter(start_time__gte=timezone.now() - datetime.timedelta(days=7))
-    shiftList = pastSeven.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
-    shiftCount = 0
+    shiftList = shifts.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
+
+    pastSeven = shiftList.filter(start_time__gte=timezone.now() - datetime.timedelta(days=7))
+    pastTwoWeek = shiftList.filter(start_time__gte=timezone.now() - datetime.timedelta(days=14))
+    pastMonth = shiftList.filter(start_time__gte=timezone.now() - datetime.timedelta(days=30))
+    
+    shiftCount = {
+        'weekCount': 0,
+        'twoWeekCount': 0,
+        'monthCount': 0,
+    }
+
     for record in pastSeven:
-        shiftCount += 1
-    print(shiftList)
+        shiftCount['weekCount'] += 1
+    
+    for record in pastTwoWeek:
+        shiftCount['twoWeekCount'] += 1
+    
+    for record in pastMonth:
+        shiftCount['monthCount'] += 1
+
     return JsonResponse(shiftCount, safe=False)
