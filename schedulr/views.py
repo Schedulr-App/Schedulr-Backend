@@ -155,6 +155,9 @@ def shift_remove(request):
         shift = Shift.objects.get(id=data['shift_id'])
         worker =User.objects.get(id=data['user'])
         shift.staff_claimed.remove(worker)
+        if shift.full:
+            shift.full = False
+            shift.save()
         return HttpResponse('Your request has been received')
     else:
         HttpResponse('Something went wrong')
@@ -193,7 +196,7 @@ def shift_export(request):
 ## Data Vis Return
 
 def shift_visual(request):
-    shifts = shifts = Shift.objects.all()
+    shifts = Shift.objects.all()
     shiftsPast = shifts.filter(start_time__lte=timezone.now())
     shiftList = shifts.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
 
@@ -217,3 +220,21 @@ def shift_visual(request):
         shiftCount['monthCount'] += 1
 
     return JsonResponse(shiftCount, safe=False)
+
+def fillrate_visual(request):
+    shifts = Shift.objects.all()
+    kind = {
+        'full': 0,
+        'open': 0,
+        'total':0,
+    }
+    for record in shifts:
+        if record.full:
+            kind['full'] += 1
+            kind['total'] += 1
+        else:
+            kind['open'] += 1
+            kind['total'] += 1
+    return JsonResponse(kind, safe=False)
+
+    
