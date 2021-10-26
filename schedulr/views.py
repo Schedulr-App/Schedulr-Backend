@@ -7,11 +7,13 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 import json
 import csv
+import datetime
+from django.utils import timezone
 
 
-# Create your views here.
+## Views ##
 
-
+# Class based serailizers
 
 class CompanyList(generics.ListCreateAPIView):
     queryset = Company.objects.all()
@@ -29,14 +31,10 @@ class PositionDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Position.objects.all()
     serializer_class = PositionSerializer
 
-# class ShiftList(generics.ListCreateAPIView):
-#     queryset = Shift.objects.all()
-#     serializer_class = ShiftSerializer
 
-# class ShiftDetail(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = Shift.objects.all()
-#     serializer_class = ShiftSerializer
+## Function based ##
 
+# Returning all shift detail
 def shift_list(request):
     shifts = Shift.objects.all().values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
     shifts_list = list(shifts)
@@ -56,10 +54,12 @@ def shift_list(request):
 
     return JsonResponse(processed, safe=False)
 
+
+# Returning shift detail about requested shift
 def shift_detail(request, pk):
     shift = Shift.objects.filter(id=pk)
     shift.select_related('staff_claimed')
-    shift_detail = shift.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name', 'staff_claimed__first_name', 'staff_claimed__last_name', 'staff_claimed__id')
+    shift_detail = shift.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name', 'staff_claimed__first_name', 'staff_claimed__last_name', 'staff_claimed__id', 'full', 'closed')
     shifts_list = list(shift_detail)
     processed = {}
     for record in shifts_list:
@@ -77,6 +77,7 @@ def shift_detail(request, pk):
             
     return JsonResponse(processed, safe=False)
 
+# Returning all staff accounts
 def user_list(request):
     users = User.objects.all().values('id', 'first_name','last_name','email','date_joined')
     users_list = users.filter(is_staff=False)
@@ -103,7 +104,7 @@ def shift_create(request):
     else:
         HttpResponse('Something went wrong')
 
-#Updating shift from front-end
+# Updating shift from front-end
 def shift_update(request):
     if request.method == 'PUT':
         data = json.loads(request.body)
@@ -113,26 +114,80 @@ def shift_update(request):
     else:
         HttpResponse('Something went wrong')
 
+# Returning unassigned staff for the selected shift record
+def shift_available_staff(request, pk):
+    shift = Shift.objects.filter(id=pk)
+    shift_claim_detail = shift.values('staff_claimed')
+    staff = User.objects.all().values('id', 'first_name','last_name')
+    staff_list = list(staff)
+    print('Staff List')
+    print(staff_list)
+    processed = []
+
+    for claim in shift_claim_detail:
+        print('outer - claim')
+        print(claim['staff_claimed'])
+
+        for staff in staff_list:
+            print('inner - staff')
+            print(staff['id'])
+
+            if staff['id'] != claim['staff_claimed']:
+                processed.append(staff)
+                staff_list.remove(staff)
+                print('No Match - adding to processed and removing from staff_list')
+                print(processed)
+
+    print('HERE')
+    print(processed)
+
+
+    return HttpResponse('Request Received')
+
+# Assigning staff to shift
 def shift_assign(request):
     if request.method == 'PUT':
         data = json.loads(request.body)
         shift = Shift.objects.get(id=data['shift_id'])
+        claimList = shift.staff_claimed.values()
+        needed = shift.staff_needed
+        claimed = 0
+
+        for record in claimList:
+            claimed += 1
+
         worker = User.objects.get(id=data['user'])
-        shift.staff_claimed.add(worker)
-        return HttpResponse('Your request has been received')
+
+        if claimed >= needed:
+            return HttpResponse('The shift is full, please review the staff list', status=250)
+        
+        else: 
+            shift.staff_claimed.add(worker)
+            claimed += 1
+            if claimed == needed:
+                shift.full = True
+                shift.save()
+            return HttpResponse('Your request has been received')
+            
+
     else:
         HttpResponse('Something went wrong')
 
+# Removing staff from shift
 def shift_remove(request):
     if request.method == 'PUT':
         data = json.loads(request.body)
         shift = Shift.objects.get(id=data['shift_id'])
         worker =User.objects.get(id=data['user'])
         shift.staff_claimed.remove(worker)
+        if shift.full:
+            shift.full = False
+            shift.save()
         return HttpResponse('Your request has been received')
     else:
         HttpResponse('Something went wrong')
 
+# Creating new staff account
 def user_create(request):
     if request.method=='POST':
         data = json.loads(request.body)
@@ -142,14 +197,16 @@ def user_create(request):
     else:
         HttpResponse('Something went wrong')
 
+# Returning staff details about requested staff record
 def user_detail(request, pk):
     user = User.objects.filter(id=pk)
     user_detail = user.values('id', 'email', 'first_name', 'last_name', 'username')
     return JsonResponse(list(user_detail), safe=False)
 
 
-## Exporting Data
+## Exporting Data Responses ##
 
+# Returning all shift data
 def shift_export(request):
     response = HttpResponse(content_type='text/csv')
 
@@ -162,3 +219,52 @@ def shift_export(request):
     response['Content-Disposition'] = 'attachment; filename="shifts.csv"'
 
     return response
+
+
+## Data Visual Responses ##
+
+# Returns number of shifts which occured in 3 timeframes
+def shift_visual(request):
+    shifts = Shift.objects.all()
+    shiftsPast = shifts.filter(start_time__lte=timezone.now())
+    shiftList = shifts.values('id', 'company', 'title', 'position', 'street', 'city', 'state', 'zip', 'lat', 'lng', 'uniform', 'description', 'on_site_contact', 'meeting_location', 'staff_needed', 'staff_claimed', 'payrate', 'billrate', 'start_time', 'end_time', 'created_at', 'created_by', 'company__name')
+
+    pastSeven = shiftList.filter(start_time__gte=timezone.now() - datetime.timedelta(days=7))
+    pastTwoWeek = shiftList.filter(start_time__gte=timezone.now() - datetime.timedelta(days=14))
+    pastMonth = shiftList.filter(start_time__gte=timezone.now() - datetime.timedelta(days=30))
+    
+    shiftCount = {
+        'weekCount': 0,
+        'twoWeekCount': 0,
+        'monthCount': 0,
+    }
+
+    for record in pastSeven:
+        shiftCount['weekCount'] += 1
+    
+    for record in pastTwoWeek:
+        shiftCount['twoWeekCount'] += 1
+    
+    for record in pastMonth:
+        shiftCount['monthCount'] += 1
+
+    return JsonResponse(shiftCount, safe=False)
+
+# Returns fill rate of all shifts
+def fillrate_visual(request):
+    shifts = Shift.objects.all()
+    kind = {
+        'full': 0,
+        'open': 0,
+        'total':0,
+    }
+    for record in shifts:
+        if record.full:
+            kind['full'] += 1
+            kind['total'] += 1
+        else:
+            kind['open'] += 1
+            kind['total'] += 1
+    return JsonResponse(kind, safe=False)
+
+    
