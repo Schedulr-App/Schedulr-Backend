@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import generics
 from .models import Company, Shift, Position
-from .serializers import CompanySerializer, ShiftSerializer, PositionSerializer
+from .serializers import CompanySerializer, PositionSerializer
 from django.http import JsonResponse
 from django.http import HttpResponse
 from django.contrib.auth.models import User
@@ -122,25 +122,14 @@ def shift_available_staff(request, pk):
     staff_list = list(staff)
     print('Staff List')
     print(staff_list)
-    processed = []
+    worker_list = []
+
+    for staff in staff_list:
+        worker_list.append(staff['id'])
 
     for claim in shift_claim_detail:
-        print('outer - claim')
-        print(claim['staff_claimed'])
-
-        for staff in staff_list:
-            print('inner - staff')
-            print(staff['id'])
-
-            if staff['id'] != claim['staff_claimed']:
-                processed.append(staff)
-                staff_list.remove(staff)
-                print('No Match - adding to processed and removing from staff_list')
-                print(processed)
-
-    print('HERE')
-    print(processed)
-
+        if claim['staff_claimed'] in worker_list:
+            worker_list.remove(claim)
 
     return HttpResponse('Request Received')
 
@@ -220,10 +209,26 @@ def shift_export(request):
 
     return response
 
+def staff_export(request):
+    response = HttpResponse(content_type='text/csv')
+
+    writer = csv.writer(response)
+
+    writer.writerow(['Worker Id', 'First Name', 'Last Name', 'Email', 'Created Date'])
+    users = User.objects.all().values('id', 'first_name','last_name','email','date_joined')
+    users_list = User.objects.filter(is_staff=False)
+
+    for user in users_list.values_list('id', 'first_name','last_name','email','date_joined'):
+        writer.writerow(user)
+    
+    response['Content-Disposition'] = 'attachment; filename="staff_list.csv"'
+
+    return response
+
 
 ## Data Visual Responses ##
 
-# Returns number of shifts which occured in 3 timeframes
+# Returns number of shifts which occured in 3 historical timeframes
 def shift_visual(request):
     shifts = Shift.objects.all()
     shiftsPast = shifts.filter(start_time__lte=timezone.now())
