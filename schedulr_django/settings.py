@@ -91,7 +91,7 @@ DATABASES = {
     #     'NAME': 'schedulr',
     #     'USER': 'schedulruser',
     #     'PASSWORD': 'schedulr',
-    #     'HOST': 'localhost'
+    #     'HOST': 'localhost',
     # }
 }
 

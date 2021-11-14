@@ -81,3 +81,15 @@ class Worker(models.Model):
     )
     email = models.CharField(max_length=100)
     phone = models.CharField(max_length=100)
+
+class Location(models.Model):
+    name = models.CharField(max_length=200, default='null')
+    street = models.CharField(max_length=200, default='null')
+    city = models.CharField(max_length=100, default='null')
+    state = models.CharField(max_length=2, default='NA')
+    zip = models.CharField(max_length=5, default='null')
+    lat = models.CharField(max_length=100, default='null')
+    lng = models.CharField(max_length=100, default='null')
+
+    def __str__(self):
+        return self.name

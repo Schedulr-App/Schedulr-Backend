@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework import generics
-from .models import Company, Shift, Position
+from .models import Company, Shift, Position, Location
 from .serializers import CompanySerializer, PositionSerializer
 from django.http import JsonResponse
 from django.http import HttpResponse
@@ -192,6 +192,26 @@ def user_detail(request, pk):
     user_detail = user.values('id', 'email', 'first_name', 'last_name', 'username')
     return JsonResponse(list(user_detail), safe=False)
 
+# Returning locations from database
+def location_list(request):
+    location = Location.objects.all().values('name', 'street', 'city', 'state', 'zip')
+    return JsonResponse(list(location), safe=False)
+
+# Create new location to database
+def location_create(request):
+    if request.method == 'POST':
+
+        data = json.loads(request.body)
+
+        print(data)
+
+        location = Location(name=data['name'], street=data['street'], city=data['city'], state=data['state'], zip=data['zip'], lat=data['lat'],lng=data['lng'])
+
+        location.save()
+
+        return HttpResponse('Your request has been received')
+    else:
+        HttpResponse('Something went wrong')
 
 ## Exporting Data Responses ##
 

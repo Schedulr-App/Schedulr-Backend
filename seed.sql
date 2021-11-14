@@ -1,0 +1,1 @@
+INSERT INTO schedulr_location(name, street, city, state, zip, lat, lng) VALUES('Museum of Contemporary Art', '220 E Chicago Ave', 'Chicago', 'IL', '60611', '41.8972216', '-87.6211234');
